@@ -1,22 +1,30 @@
 #  Estudos de Lógica de Programação
 
-Este repositório foi criado com o foco em **estudar lógica de programação**, resolvendo diversos exercícios propostos para fortalecer a base de desenvolvimento.
+Este repositório foi criado com o foco em **estudar a Programação Orientada a Objetoso**, Escrevendo linha por linha para fortalecer a base de desenvolvimento.
 
 ##  Objetivos
-* Praticar a resolução de problemas complexos.
-* Dominar estruturas de dados e algoritmos.
-* Documentar a evolução no aprendizado da linguagem **C#**.
+* Praticar o desenvolvimento.
+* Dominar a base de Programação Orientada a Objetos.
 
 ##  Tecnologias e Ferramentas
 * **Linguagem:** C#
-* **Ambiente:** Visual Studio / VS Code
+* **Ambiente:** VS Code
 * **IA:** Auxílio no aprendizado e explicação de conceitos.
 
 ##  Conteúdos Praticados
-* Estruturas de decisão (`if/else`, `switch`)
-* Laços de repetição (`for`, `while`)
-* Arrays e Listas
-* Funções e Métodos
+* Entity Framework
+* LINQ
+* Classes e Objetos
+* Tipos
+* Estrutura de uma API
+* Propriedades (get e set)
+* Injeção de dependência
+* Métodos Assíncronos
+* DTOs
+* Genéricos(<>)
+* RelationShip(1:1)
+* Public, private,readonly
+* Testes Unitários
 
 ---
 *Repositório mantido por ooliveira-ops*
