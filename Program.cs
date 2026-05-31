@@ -290,336 +290,368 @@ Console.WriteLine(pessoa.ObterResumo());
     public DateTime DataCadastri {get; private set;}
     = DateTime.UtcNow;
 
-//ENTIDADE:
-public class Endereco
-    {
-        public int Id{get; set;}
-        public string Logradouro{get; set;}
-        public string Cep{get; set;}
-        public int PessoaId{get; set;}
+    //ENTIDADE:
+    public class Endereco
+        {
+            public int Id{get; set;}
+            public string Logradouro{get; set;}
+            public string Cep{get; set;}
+            public int PessoaId{get; set;}
+        }
+
+    //DTP de criação - sem Id(quem gera é o banco)
+    public class CriarPessoaDto
+        {
+            public string Nome{get; set;}
+            public int Idade{get; set;}
+            public string Cpf{get; set;}
+        }
     }
 
-//DTP de criação - sem Id(quem gera é o banco)
-public class CriarPessoaDto
+
+    //INJEÇÃO DE DEPENDENCIA:
+    //1. Interface - (define o contrato):
+    public interface IPessoaService
     {
-        public string Nome{get; set;}
-        public int Idade{get; set;}
-        public string Cpf{get; set;}
-    }
-}
+        IEnumerable<Pessoa> ObterTodos();
+        Pessoa ObterPorId(int id);
+        void Criar(CriarPessoaDto dto);   
+    }                                                                                                                                                                                                
 
-
-//INJEÇÃO DE DEPENDENCIA:
-//1. Interface - (define o contrato):
-public interface IPessoaService
-{
-    IEnumerable<Pessoa> ObterTodos();
-    Pessoa ObterPorId(int id);
-    void Criar(CriarPessoaDto dto);   
-}                                                                                                                                                                                                
-
-//2. Implementação concreta:
-public class PessoaService : IPessoaService
-{
-    private readonly AppDbContext _context;
-
-//Dependência recebida pelo construtor - ñ criada aqui 
-    public PessoaService(AppDbContext context)
+    //2. Implementação concreta:
+    public class PessoaService : IPessoaService
     {
-        _context = context;
-    }
+        private readonly AppDbContext _context;
 
-    public IEnumerable<Pessoa> ObterTodos()
-    => _context.Pessoas.ToList();
+    //Dependência recebida pelo construtor - ñ criada aqui 
+        public PessoaService(AppDbContext context)
+        {
+            _context = context;
+        }
 
-    public void Criar(CriarPessoaDto dto)
-    {
-        var pessoa = new Pessoa {Nome = dto.Nome, 
-        Cpf = dto.Cpf, Idade = dto.Idade};
-        _context.SaveChanges();
-    }
-}
+        public IEnumerable<Pessoa> ObterTodos()
+        => _context.Pessoas.ToList();
 
-//3. Registro no Program.cs
-builder.Services.AddScoped<IPessoaService, PessoaService>();
-
-
-//4. Controller recebe o serviço automaticamente
-[ApiController]
-[Route("api/[controller]")]
-public class PessoasController : ControllerBase
-{
-    private readonly IPessoaService _pessoaService;
-
-    public PessoasController(IPessoaService pessoaService)
-    {
-        _pessoaService = pessoaService;
+        public void Criar(CriarPessoaDto dto)
+        {
+            var pessoa = new Pessoa {Nome = dto.Nome, 
+            Cpf = dto.Cpf, Idade = dto.Idade};
+            _context.SaveChanges();
+        }
     }
 
-    [HttpGet]
-    public IActionResult GetAll() =>
-    Ok(_pessoaService.ObterTodos());
+    //3. Registro no Program.cs
+    builder.Services.AddScoped<IPessoaService, PessoaService>();
 
+
+    //4. Controller recebe o serviço automaticamente
+    [ApiController]
+    [Route("api/[controller]")]
+    public class PessoasController : ControllerBase
+    {
+        private readonly IPessoaService _pessoaService;
+
+        public PessoasController(IPessoaService pessoaService)
+        {
+            _pessoaService = pessoaService;
+        }
+
+        [HttpGet]
+        public IActionResult GetAll() =>
+        Ok(_pessoaService.ObterTodos());
+
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id() =>
+        Ok(_pessoaService.ObterPorId(id));
+
+        [HttpPost]
+        public IActionResult Create(CriarPessoaDto dto)
+        {
+            _pessoaService.Criar(dto);
+            return Created();
+        }
+    }
+
+
+
+    //Métodos async e await:
+    //Interface com métodos assíncronos:
+    public interface IPessoaService
+    {
+        Task<IEnumerable<Pessoa>> ObterTodosAsync();
+        Task<Pessoa?> ObterPorIdAsync(int id);
+        Task CriarAsync(CriarPessoaDto dto);
+    }
+
+    //Implementação usando E.F. (já é async nativamente):
+    public class PessoaService : IPessoaService
+    {
+        private readonly AppDbContext _context;
+
+        public PessoaService(AppDbContext)
+        {
+            _context = context;
+        }
+
+        public async Task<IEnumerable<Pessoa>> ObterTodosAsync()
+        {
+            return await _context.Pessoas.ToListAsync();
+        }
+
+        public async Task<Pessoa?> ObterPorIdAsync(int id)
+        {
+            return await _context.Pessoas.FindAsync(id);
+        }
+
+        public async Task CriarAsync(CriarPessoaDto dto)
+        {
+            var pessoa = new Pessoa {
+            Nome = dto.Nome,
+            Cpf = dto. Cpf,
+            Idade - dto.Idade
+            };
+            _context.Pessoas.Add(pessoa);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    //Controller também async 
+    [ApiController]
+    [Route("api/controller")]
+    public class PessoasController : ControlerBase
+    {
+        private readonly IPessoaService _pessoaService;
+
+        public PessoasController(IPessoaService pessoaService)
+        {
+            _pessoaService = pessoaService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var pessoas = await _personService.ObterTodosAsync();
+            return Ok(pessoas);
+        }
+
+        {Http("{id}")}
+        public async Task<IActionResult> GetById(int id)
+        {
+            var pessoa = await _pessoaService.ObterPorIdAsync(id);
+            if (pessoa is null) return NotFound();
+            return Ok(pessoas);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(CriarPessoasDto dto)
+        {
+            await _pessoasService.CriarAsync(dto);
+            return Created();
+        }
+    }
+
+
+    //LINQ:
+    //Lista de exemplo em memória:
+    var pessoas = new List<Pessoa>
+    {
+        new Pessoa { Id = 1, Nome = "Ana", Idade = 28, Cidade = "SP"},
+        new Pessoa { Id = 2, Nome = "Bruno", Idade = 35, Cidade = "Rj"},
+        new Pessoa { Id = 3, Nome = "Carla", Idade = 22, Cidade = "SP"},
+        new Pessoa { Id = 4, Nome = "Diego", Idade = 28, Cidade = "MG"},
+    };
+
+    //Where - filtra
+    var moradosSP = pessoas.Where(p => p.Cidade) == "SP").ToList();
+    //[Ana, Carla]
+
+    //Select - transforma/projeta
+    var nomes = pessoas.Select(p => p.Nome).ToList();
+    // ["Ana", "Bruno", "Carla", "Diego]
+
+    //FirstOrDefault - primeiro q satisfaz, ou null
+    var pessoa = pessoas.FristOrDefault(p => p.Id == 2);
+    // Bruno
+
+    //OrderBy / OrderByDescending - ordena
+    var porIdade = pessoas.OrderBy(p => p.Idade).ToList();
+    // Carla(22), Ana (28)...
+
+    //ENcadeamento
+    var resultado = pessoas
+        .Where(p => p.Cidade == "SP")
+        .OrderBy(p => p.Nome)
+        .Select(p => new {p.Nome, p.Idade })
+        .ToList();
+        //Ana, 28 - Carla, 32
+
+
+
+    //Genéricos :
+    //sem:
+    public Pessoa BuscarPrimeiro(List<Pessoa> lista)
+    => lista.FirstOrDefault();
+    public Endereco BuscarPrimeiro(List<Endereco> lista)
+    => lista.FirstOrDefault();
+
+
+    //Com generico:
+    public T BuscarPrimeiro<t>(List<T> lista) 
+    => lista.FirstOrDefault();
+
+
+    //Usando:
+    var pessoa = BuscarPrimeiro<Pessoa>(listadePessoas);
+    var endereco = BuscarPrimeiro<Endereco>(listaDeEnderecos);
+
+
+    //Classes api response 
+    public class ApiResponse<T>
+    {
+        public bool Sucesso{get; set;}
+        public string Mensagem {get; set;}
+        Public T Dados {get; set:}
+
+        public static ApiReponse<T> Ok(T Dados) =>
+            new ApiReponse<T> {Sucesso = false, Mensagem = mensagem};
+    }
+
+
+    //Usando no controller:
     [HttpGet("{id}")]
-    public IActionResult GetById(int id() =>
-    Ok(_pessoaService.ObterPorId(id));
-
-    [HttpPost]
-    public IActionResult Create(CriarPessoaDto dto)
-    {
-        _pessoaService.Criar(dto);
-        return Created();
-    }
-}
-
-
-
-//Métodos async e await:
-//Interface com métodos assíncronos:
-public interface IPessoaService
-{
-    Task<IEnumerable<Pessoa>> ObterTodosAsync();
-    Task<Pessoa?> ObterPorIdAsync(int id);
-    Task CriarAsync(CriarPessoaDto dto);
-}
-
-//Implementação usando E.F. (já é async nativamente):
-public class PessoaService : IPessoaService
-{
-    private readonly AppDbContext _context;
-
-    public PessoaService(AppDbContext)
-    {
-        _context = context;
-    }
-
-    public async Task<IEnumerable<Pessoa>> ObterTodosAsync()
-    {
-        return await _context.Pessoas.ToListAsync();
-    }
-
-    public async Task<Pessoa?> ObterPorIdAsync(int id)
-    {
-        return await _context.Pessoas.FindAsync(id);
-    }
-
-    public async Task CriarAsync(CriarPessoaDto dto)
-    {
-        var pessoa = new Pessoa {
-        Nome = dto.Nome,
-         Cpf = dto. Cpf,
-         Idade - dto.Idade
-         };
-         _context.Pessoas.Add(pessoa);
-         await _context.SaveChangesAsync();
-    }
-}
-
-//Controller também async 
-[ApiController]
-[Route("api/controller")]
-public class PessoasController : ControlerBase
-{
-    private readonly IPessoaService _pessoaService;
-
-    public PessoasController(IPessoaService pessoaService)
-    {
-        _pessoaService = pessoaService;
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var pessoas = await _personService.ObterTodosAsync();
-        return Ok(pessoas);
-    }
-
-    {Http("{id}")}
     public async Task<IActionResult> GetById(int id)
     {
         var pessoa = await _pessoaService.ObterPorIdAsync(id);
-        if (pessoa is null) return NotFound();
-        return Ok(pessoas);
+
+        if (pessoa is null)
+        return NotFound(ApiReponse....)
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Create(CriarPessoasDto dto)
+
+
+    //RelationShip 1:1 :
+
+
+    //DTOs p criar pessoa c end juntos:
+    public class CriarPessoaComEnderecoDto
     {
-        await _pessoasService.CriarAsync(dto);
-        return Created();
+        public string Nome {get; set;}
+        public string Cpf {get; set;}
+        public int Idade {get; set;}
+        public CriarEnderecoDto Endereco {get; set;}
     }
-}
 
-
-//LINQ:
-//Lista de exemplo em memória:
-var pessoas = new List<Pessoa>
-{
-    new Pessoa { Id = 1, Nome = "Ana", Idade = 28, Cidade = "SP"},
-    new Pessoa { Id = 2, Nome = "Bruno", Idade = 35, Cidade = "Rj"},
-    new Pessoa { Id = 3, Nome = "Carla", Idade = 22, Cidade = "SP"},
-    new Pessoa { Id = 4, Nome = "Diego", Idade = 28, Cidade = "MG"},
-};
-
-//Where - filtra
-var moradosSP = pessoas.Where(p => p.Cidade) == "SP").ToList();
-//[Ana, Carla]
-
-//Select - transforma/projeta
-var nomes = pessoas.Select(p => p.Nome).ToList();
-// ["Ana", "Bruno", "Carla", "Diego]
-
-//FirstOrDefault - primeiro q satisfaz, ou null
-var pessoa = pessoas.FristOrDefault(p => p.Id == 2);
-// Bruno
-
-//OrderBy / OrderByDescending - ordena
-var porIdade = pessoas.OrderBy(p => p.Idade).ToList();
-// Carla(22), Ana (28)...
-
-//ENcadeamento
-var resultado = pessoas
-    .Where(p => p.Cidade == "SP")
-    .OrderBy(p => p.Nome)
-    .Select(p => new {p.Nome, p.Idade })
-    .ToList();
-    //Ana, 28 - Carla, 32
-
-
-
-//Genéricos :
-//sem:
-public Pessoa BuscarPrimeiro(List<Pessoa> lista)
-=> lista.FirstOrDefault();
-public Endereco BuscarPrimeiro(List<Endereco> lista)
-=> lista.FirstOrDefault();
-
-
-//Com generico:
-public T BuscarPrimeiro<t>(List<T> lista) 
-=> lista.FirstOrDefault();
-
-
-//Usando:
-var pessoa = BuscarPrimeiro<Pessoa>(listadePessoas);
-var endereco = BuscarPrimeiro<Endereco>(listaDeEnderecos);
-
-
-//Classes api response 
-public class ApiResponse<T>
-{
-    public bool Sucesso{get; set;}
-    public string Mensagem {get; set;}
-    Public T Dados {get; set:}
-
-    public static ApiReponse<T> Ok(T Dados) =>
-        new ApiReponse<T> {Sucesso = false, Mensagem = mensagem};
-}
-
-
-//Usando no controller:
-[HttpGet("{id}")]
-public async Task<IActionResult> GetById(int id)
-{
-    var pessoa = await _pessoaService.ObterPorIdAsync(id);
-
-    if (pessoa is null)
-    return NotFound(ApiReponse....)
-}
-
-
-
-//RelationShip 1:1 :
-
-
-//DTOs p criar pessoa c end juntos:
-public class CriarPessoaComEnderecoDto
-{
-    public string Nome {get; set;}
-    public string Cpf {get; set;}
-    public int Idade {get; set;}
-    public CriarEnderecoDto Endereco {get; set;}
-}
-
-public class CriarEnderecoDto
-{
-    public string Logadouro {get; set;}
-    public string Numero {get; set;}
-    public string Cep {get; set;}
-    public string Cidade {get; set;}
-}
-
-//DTO de resposta com endereço animado
-public class PessoaResponseDto
-{
-    public int Id {get; set;}
-    public string Nome {get; set;}
-    public ind Idade {get; set;}
-    public EnderecoResponseDto Endereco { get; set; }}
-}
-
-
-//PUBLIC,PRIVATE E READONLY..:
-public class Pessoa
-{
-    public int Id {get; set;} //Public: EF e controllers precisam ler/escrever
-    //prvate set: qlqr um lê, mas só a classe altera
-    public Datetime DataCadastro {get; private set;} = DateTime.UtcNow;
-    //..............
-}
-
-//MIGRATIONS - E.F:
-
-//------------------
-
-//Testes unitários:
-
-//"Api.Tests"
-using Xunit;
-
-public class EnderecoServiceTestes
-{
-    [Fact]
-    public void CriarEndereco_ComDadosValidos_DeveRetornarEnderecoPreenchido()
+    public class CriarEnderecoDto
     {
-        //Arrange (preparação do cenário)
-        var service = new EnderecoService();
-        var dto = new EnderecoDTO
+        public string Logadouro {get; set;}
+        public string Numero {get; set;}
+        public string Cep {get; set;}
+        public string Cidade {get; set;}
+    }
+
+    //DTO de resposta com endereço animado
+    public class PessoaResponseDto
+    {
+        public int Id {get; set;}
+        public string Nome {get; set;}
+        public ind Idade {get; set;}
+        public EnderecoResponseDto Endereco { get; set; }}
+    }
+
+
+    //PUBLIC,PRIVATE E READONLY..:
+    public class Pessoa
+    {
+        public int Id {get; set;} //Public: EF e controllers precisam ler/escrever
+        //prvate set: qlqr um lê, mas só a classe altera
+        public Datetime DataCadastro {get; private set;} = DateTime.UtcNow;
+        //..............
+    }
+
+    //MIGRATIONS - E.F:
+
+    //------------------
+
+    //Testes unitários:
+
+    //"Api.Tests"
+    using Xunit;
+
+    public class EnderecoServiceTestes
+    {
+        [Fact]
+        public void CriarEndereco_ComDadosValidos_DeveRetornarEnderecoPreenchido()
         {
-            Rua = "Rua das Flores",
-            Cidade  = "São Paulo",
-            Cep = "01235-137"
-        };
-
-        //Act (executa a ação)
-        var resultado = service.CriarEndereco(dto);
-
-        //Assert (Verifica o resultado)
-        Assert.NotNull(resultado);
-        Assert.Equal("Rua das Flores", resultado.Rua);
-        Assert.Equal("01235-137", resultado.Cep) 
-    }
-
-    [Fact]
-    public void CriarEndereco_ComCepVazio__DeveLancarExcecao()
-    {
-        //Arrange (preparação do cenário)
-        var service = new EnderecoService();
-        var dto = new EnderecoDTO {
-            Rua = "Rua X",
-            Cidade = "SP",
-            Cep = ""
+            //Arrange (preparação do cenário)
+            var service = new EnderecoService();
+            var dto = new EnderecoDTO
+            {
+                Rua = "Rua das Flores",
+                Cidade  = "São Paulo",
+                Cep = "01235-137"
             };
 
-            //Act e Assert(execução e verificação)
-            Assert.Throws<ArgumentException>(() =>
-            service.CriarEndereco(dto));
+            //Act (executa a ação)
+            var resultado = service.CriarEndereco(dto);
+
+            //Assert (Verifica o resultado)
+            Assert.NotNull(resultado);
+            Assert.Equal("Rua das Flores", resultado.Rua);
+            Assert.Equal("01235-137", resultado.Cep) 
+        }
+
+        [Fact]
+        public void CriarEndereco_ComCepVazio__DeveLancarExcecao()
+        {
+            //Arrange (preparação do cenário)
+            var service = new EnderecoService();
+            var dto = new EnderecoDTO {
+                Rua = "Rua X",
+                Cidade = "SP",
+                Cep = ""
+                };
+
+                //Act e Assert(execução e verificação)
+                Assert.Throws<ArgumentException>(() =>
+                service.CriarEndereco(dto));
+        }
     }
+
+
+
+    //relacionamento de (1:1)
+
+    //person sozinha, sem acessar o endereço:
+    var person = new person {Name = "João"};
+    //Como acessa o end.? não dá!
+
+
+    //com o Relacionameto CORRETO:
+
+    //person com o end. dela
+    var person = new person
+    {
+        Name = "João",
+        AddressId = 1,      //ID do endereço
+        Address = new PersonAddress {
+            Street = "Rua A",
+            City = "São Paulo" 
+        }
+    };
+
+    // outro ex: 1:1
+
+    var person = new person
+    {
+        Name = "João",
+        AddressId = 1,
+        Address = new PersonAddress
+        {
+            Stret = "Rua A",
+            Number = "123"
+            //..............
+        }
+    };
 }
-
-
-    }
-}
-
 
 
