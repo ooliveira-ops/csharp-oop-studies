@@ -1,6 +1,6 @@
 #  Estudos de Lógica de Programação
 
-Este repositório foi criado com o foco em **estudar a Programação Orientada a Objetos**, Escrevendo linha por linha para fortalecer a base de desenvolvimento.
+Este repositório foi criado com o foco em **estudar a Programação Orientada a Objetos**, Escrevendo linha por linha para fortalecer a base de desenvolvimento(registrado no program)
 
 ##  Objetivos
 * Praticar o desenvolvimento.
