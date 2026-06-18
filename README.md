@@ -9,7 +9,6 @@ Este repositório foi criado com o foco em **estudar a Programação Orientada a
 ##  Tecnologias e Ferramentas
 * **Linguagem:** C#
 * **Ambiente:** VS Code
-* **IA:** Auxílio no aprendizado e explicação de conceitos.
 
 ##  Conteúdos Praticados
 * Entity Framework
